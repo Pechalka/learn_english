@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	
+
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.2.0/knockout-min.js"></script>
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+
+	<script>
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+
+var Page = function(){
+	var self = this;
+
+	self.rus_text = ko.observable('-');
+	self.en_text = ko.observable('-');
+
+	var mm = [
+		'I',
+		'you',
+		'he',
+		'she',
+		'we',
+		'they'
+	];
+
+	var tt = ['Б', 'Н', 'П'];
+
+	var gg = ['+', '-', '?'];
+
+	self.verbs = ko.observable([
+		['love'],
+		['see', 'saw'],
+		['open'],
+		['close'],
+		['hope'],
+		['ask'],
+		['go', 'went'],
+		['give', 'gave'],
+		['take', 'took'],
+		['speak', 'spoke'],
+		['travel'],
+		['start'],
+		['finish'],
+		['help'],
+		['answer']
+		// 'начинать',
+		// 'заканчивать',
+		// 'надеется',
+		// 'помогать',
+		// 'спрашивать',
+		// 'отвичать',
+		// 'давать',
+		// 'брать',
+		// 'говорить',
+		// 'путешествовать'
+	]);
+
+	self.hint = ko.observable(false);
+
+	self.showTrueAnswer = function(){
+		self.hint(true)
+	}
+
+	self.generate = function(){
+		var time = tt[getRandomInt(0, tt.length)];
+		var tone = gg[getRandomInt(0, gg.length)];
+		
+		var who = mm[getRandomInt(0, mm.length)];
+		var verbs = self.verbs()[getRandomInt(0, self.verbs().length)];
+		var verb = verbs[0];
+
+		var en_text = '-';
+		if (time == 'Б' && tone == '?'){
+			en_text = 'will ' + who + ' ' + verb + ' ?';
+		}
+		if (time == 'Б' && tone == '+'){
+			en_text = who + ' will ' + verb + ' .';
+		}
+		if (time == 'Б' && tone == '-'){
+			en_text = who + ' will not ' + verb + ' .';
+		}
+
+		if (time == 'Н' && tone == '?'){
+			en_text = ((who == 'he' || who == 'she') ? 'does' : 'do') + ' ' + 
+						who + ' ' + verb + ' ?';
+		}
+		if (time == 'Н' && tone == '+'){
+			en_text = who + ' ' + verb + ((who == 'he' || who == 'she') ? 's' : '') + ' .';
+		}
+		if (time == 'Н' && tone == '-'){
+			en_text = who + ' ' + ((who == 'he' || who == 'she') ? 'does' : 'do') + ' not ' + verb + ' .';
+		}
+
+		if (time == 'П' && tone == '?'){
+			en_text =  ' did ' + who + ' ' + verb + ' ?';
+		}
+		if (time == 'П' && tone == '+'){
+			en_text = who + ' ' + (verbs.length == 1 ? verb + 'ed' : verbs[1])  + ' .';
+		}
+		if (time == 'П' && tone == '-'){
+			en_text = who + ' did not ' + verb + '.';
+		}
+
+		if (en_text != '-'){
+			self.en_text(en_text);
+			self.hint(false);
+			translate(en_text).done(self.rus_text);
+		}
+
+	}
+}
+
+var translate = function(text){
+	var d = $.Deferred();
+
+	$.get('https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20140921T220948Z.e9aec4b313ff76e1.1b72919c63cd9b2e14e4decf418e3b00013d4630&lang=en-ru&text=' + text, function(r){
+		console.log('');
+		console.log(r.text)
+		d.resolve(r.text[0])
+	}).fail(d.reject)
+
+	return d.promise();
+}
+
+window.onload = function(){
+	
+	ko.applyBindings(new Page)
+
+}
+
+	</script>
+</head>
+<body>
+	<h1 data-bind="text : rus_text"></h1>
+	<!-- ko if : hint -->
+	<h1 data-bind="text : en_text"></h1>
+	<!-- /ko -->
+
+	<a href="" data-bind="click : generate">Новое</a><br/>
+	<a href="" data-bind="click : showTrueAnswer">Правельный ответ</a>
+
+</body>
+</html>
